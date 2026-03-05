@@ -1,7 +1,14 @@
-import { Module, Global, DynamicModule, Provider, Logger } from '@nestjs/common';
+import {
+  DynamicModule,
+  Global,
+  Logger,
+  Module,
+  Provider,
+} from '@nestjs/common';
 import Redis from 'ioredis';
-import { REDIS_CLIENT } from './redis.constants';
 import { RedisModuleAsyncOptions } from './interfaces';
+import { REDIS_CLIENT } from './redis.constants';
+import { RedisService } from './redis.service';
 
 @Global()
 @Module({})
@@ -39,8 +46,8 @@ export class RedisModule {
     return {
       module: RedisModule,
       imports: options.imports || [],
-      providers: [redisClientProvider],
-      exports: [redisClientProvider],
+      providers: [redisClientProvider, RedisService],
+      exports: [redisClientProvider, RedisService],
     };
   }
 }

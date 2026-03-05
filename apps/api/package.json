@@ -26,6 +26,7 @@
     "@nestjs/mapped-types": "*",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.6",
+    "@nestjs/terminus": "^11.1.1",
     "drizzle-orm": "^0.45.1",
     "ioredis": "^5.10.0",
     "pg": "^8.19.0",

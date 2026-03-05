@@ -28,4 +28,24 @@ export class RedisService implements OnModuleDestroy {
   getClient(): Redis {
     return this.redisClient;
   }
+  async isHealthy(): Promise<boolean> {
+    try {
+      const client = this.redisClient;
+
+      if (!client || client.status !== 'ready') {
+        return false;
+      }
+
+      const result = await Promise.race([
+        client.ping(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Redis timeout')), 1500),
+        ),
+      ]);
+
+      return result === 'PONG' || result === 'OK';
+    } catch {
+      return false;
+    }
+  }
 }

@@ -1,31 +1,42 @@
 import { Module, Logger } from '@nestjs/common';
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { ConfigService } from '@nestjs/config';
 import { Pool } from 'pg';
 import { DATABASE_CONNECTION } from './database.contants';
+import * as schema from './schema/index';
 
 @Module({
   providers: [
     {
       provide: DATABASE_CONNECTION,
-      useFactory: (configService: ConfigService) => {
-        const logger = new Logger('DatabaseModule');
+      useFactory: async (configService: ConfigService) => {
+        const logger = new Logger('Database');
 
         const pool = new Pool({
-          connectionString: configService.getOrThrow('DATABASE_URL'),
+          connectionString: configService.getOrThrow<string>('DATABASE_URL'),
+          max: 10,
+          idleTimeoutMillis: 30000,
+          connectionTimeoutMillis: 5000,
         });
 
-        pool.on('connect', () => {
-          logger.log('✔ Database Connected Successfully');
-        });
+        try {
+          const client = await pool.connect();
+          await client.query('SELECT 1');
+          client.release();
+
+          logger.log('✔ Database connected successfully');
+        } catch (error) {
+          logger.error('❌ Database connection failed', error);
+          throw error;
+        }
 
         pool.on('error', (err) => {
-          logger.error('❌ Database Connection Error', err.stack);
+          logger.error('❌ Unexpected database error', err);
         });
 
-        return drizzle(pool, {
-          schema: {},
-        });
+        const db = drizzle(pool, { schema });
+
+        return db;
       },
       inject: [ConfigService],
     },
@@ -33,3 +44,5 @@ import { DATABASE_CONNECTION } from './database.contants';
   exports: [DATABASE_CONNECTION],
 })
 export class DatabaseModule {}
+
+export type DB = NodePgDatabase<typeof schema>;
